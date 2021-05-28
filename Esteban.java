@@ -16,8 +16,9 @@ public class Esteban implements AgentProgram {
     protected int size = 0;
     protected int[] lastBox = new int[2];
     protected int phase = 0;
-    protected int cuenta;
+    protected int cuenta = 0;
     protected boolean recheck= true;
+    protected int turnos=0;
 	
     public Esteban(String color) {
     	this.color = color;
@@ -42,13 +43,17 @@ public class Esteban implements AgentProgram {
     
 	@Override
 	public Action compute(Percept p) {
-//		long time = (long)(200 * Math.random());
-//        try{
-//           Thread.sleep(time);
-//        }catch(Exception e){}
-		if(size == 0)
+		
+		long time = (long)(200 * Math.random());
+        try{
+           Thread.sleep(time);
+        }catch(Exception e){}
+        
+		if(size == 0) { 
         	// Gets the size of the board
         	size = Integer.parseInt((String)p.get(Squares.SIZE));
+        	
+		}
         if(board == null) {
         	board = new int[size][size];
         	for( int i=0; i<size; i++ ){
@@ -71,12 +76,19 @@ public class Esteban implements AgentProgram {
         if( p.get(Squares.TURN).equals(color) ){
         	// Esteban turn
 //        	System.out.println("Esteban turn");
+        	turnos++;
         	Array<String> moves = new Array<String>();
         	switch(phase) {
         		case 0:
         			int y = 0, x = 0;
+        			System.out.println(turnos);
+        			out:
         			for(int i = lastBox[0];i < size;i++) {
         				for(int j = lastBox[1];j < size;j++) {
+        					if (turnos*2+70>=((size*size*4)-(4*size)-((size*size*4)-(4*size))/2)) {
+        						phase = 1;
+        						break out;
+        					}
         					if(this.lines(i, j, p) < 2) {
         						if(((String) p.get(i + ":" + j + ":" + Squares.RIGHT)).equals(Squares.FALSE)) {
         							if(j + 1 != size) {
@@ -95,13 +107,12 @@ public class Esteban implements AgentProgram {
         							lastBox[0] = j + 1 == size? i + 1 : i;
         							y = i;
         							x = j;
-        							break;
+        							break out;
         						}
         					}	
         				}
-        				if(i == size-1) phase = 2;
 	    				lastBox[1] = 0;
-        				if(moves.size() != 0) break;
+        				
         			}
         			try {
                 		String move = moves.get((int) (Math.random() * moves.size()));
@@ -112,17 +123,17 @@ public class Esteban implements AgentProgram {
         		case 1:
         			// revision
         			actualizarTablero(p);
-        			phase = 2;
+        			System.out.println("Llegue a la fase 1");
         			break; 	
 		        	
         		case 2:
+        			System.out.println(cuenta);
         			// min-max
         			actualizarTablero(p);
         			ArrayList<String> datos = new ArrayList<String>();
         			
         			for (int i = 0;i < size;i++) {
         				for (int j = 0;j < size;j++) {
-        					System.out.println("\n" + i + " // " + j);
         					cuenta = 0;
         					values = Arrays.stream(board).map(int[]::clone).toArray(int[][]::new);
 
@@ -169,14 +180,24 @@ public class Esteban implements AgentProgram {
 	    							cuenta = 0;
 	    						}
         				}
-        			}
-        			System.out.println(datos);
+        			}        			        			
+        			
         			try{
-        				return new Action(0 + ":" + 0 + ":" + Squares.TOP);
+        				String min = "";
+            			int minMov = Integer.MAX_VALUE;
+            			for (String s:datos) {
+            				String[] aux = s.split(":");
+            				if (Integer.parseInt(aux[3])<minMov) {
+            					minMov=Integer.parseInt(aux[3]);
+            					
+            					min = aux[0]+":"+aux[1]+":"+aux[2];
+            				}
+            			}
+        				return new Action(min);
         			}catch (Exception e) {
         				
         			}
-
+        			datos.clear();
         			break;
         		default:
         			break;
@@ -226,7 +247,6 @@ public class Esteban implements AgentProgram {
 	        if( (values[i][j] & Board.LEFT)==0 ){
 	            values[i][j] |= Board.LEFT;
 	            values[i][j-1] |= Board.RIGHT;
-	            System.out.print("L ");
 	            cuenta++;
 	            check(i,j-1);
 	        }
@@ -234,7 +254,6 @@ public class Esteban implements AgentProgram {
 	        if( (values[i][j] & Board.TOP)==0 ){
 	            values[i][j] |= Board.TOP;
 	            values[i-1][j] |= Board.BOTTOM;
-	            System.out.print("T ");
 	            cuenta++;
 	            check(i-1,j);
 	        }
@@ -242,7 +261,6 @@ public class Esteban implements AgentProgram {
 	        if( (values[i][j] & Board.RIGHT)==0 ){
 	            values[i][j] |= Board.RIGHT;
 	            values[i][j+1] |= Board.LEFT;
-	            System.out.print("R ");
 	            cuenta++;
 	            check(i,j+1);
 	        }
@@ -250,7 +268,6 @@ public class Esteban implements AgentProgram {
 	        if( (values[i][j] & Board.BOTTOM)==0 ){
 	            values[i][j] |= Board.BOTTOM;
 	            values[i+1][j] |= Board.TOP;
-	            System.out.print("B ");
 	            cuenta++;
 	            check(i+1,j);
 	        }
@@ -258,5 +275,4 @@ public class Esteban implements AgentProgram {
       }
 	}  
     
-	
 }
