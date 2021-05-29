@@ -1,6 +1,5 @@
 package uniltiranyu.examples.games.squares;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import speco.array.Array;
@@ -17,184 +16,51 @@ public class Esteban implements AgentProgram {
     protected int[] lastBox = new int[2];
     protected int phase = 0;
     protected int cuenta = 0;
-    protected boolean recheck= true;
-    protected int turnos=0;
+	protected boolean recheck = true;
+	protected Array<String> moves = new Array<>();
 	
     public Esteban(String color) {
-    	this.color = color;
-    	this.lastBox[0] = 0;
-    	this.lastBox[1] = 1;
+		this.color = color;
+		this.lastBox[0] = 0;
+		this.lastBox[1] = 1;
 	}
-    
-    private void actualizarTablero(Percept p) {
-    	for(int i = 0;i < size;i++) {
-    		for(int j = 0;j < size;j++) {
-    			if(((String)p.get(i+":"+j+":"+Squares.LEFT)).equals(Squares.TRUE))
-    				board[i][j] |= Board.LEFT;
-    			if(((String)p.get(i+":"+j+":"+Squares.TOP)).equals(Squares.TRUE))
-    				board[i][j] |= Board.TOP;
-    			if(((String)p.get(i+":"+j+":"+Squares.BOTTOM)).equals(Squares.TRUE))
-    				board[i][j] |= Board.BOTTOM;
-    			if(((String)p.get(i+":"+j+":"+Squares.RIGHT)).equals(Squares.TRUE))
-    				board[i][j] |= Board.RIGHT;
-    		}
-    	}
-    }
     
 	@Override
 	public Action compute(Percept p) {
-		
 		long time = (long)(200 * Math.random());
-        try{
-           Thread.sleep(time);
-        }catch(Exception e){}
+		try {
+			Thread.sleep(time);
+        }catch(Exception e) {}
         
-		if(size == 0) { 
-        	// Gets the size of the board
+		if(size == 0) // Gets the size of the board
         	size = Integer.parseInt((String)p.get(Squares.SIZE));
-        	
-		}
-        if(board == null) {
-        	board = new int[size][size];
-        	for( int i=0; i<size; i++ ){
-                board[i][0] = Board.LEFT;
-                board[i][size-1] = Board.RIGHT;
-            }
-            for( int i=0; i<size; i++ ){
-                board[0][i] |= Board.TOP;
-                board[size-1][i] |= Board.BOTTOM;
-            }
-//            for(int i = 0;i < size;i++) {
-//            	for(int j = 0;j < size;j++) {
-//            		System.out.print(board[i][j] + " ");
-//            	}
-//            	System.out.println();
-//            }
-        }
+        if(board == null) createBoard();
         
         // Determines if it is the agents turn
         if( p.get(Squares.TURN).equals(color) ){
-        	// Esteban turn
-        	Array<String> moves = new Array<String>();
+			// Esteban turn
         	switch(phase) {
         		case 0:
-        			int y = 0, x = 0;
-        			System.out.println(turnos);
-        			out:
-        			for(int i = lastBox[0];i < size;i++) {
-        				for(int j = lastBox[1];j < size;j++) {
-        					if (turnos*2+70>=((size*size*4)-(4*size)-((size*size*4)-(4*size))/2)) {
-        						phase = 1;
-        						break out;
-        					}
-        					if(this.lines(i, j, p) < 2) {
-        						if(((String) p.get(i + ":" + j + ":" + Squares.RIGHT)).equals(Squares.FALSE)) {
-        							if(j + 1 != size) {
-	        							if(this.lines(i, j + 1, p) <2)
-	        								moves.add(Squares.RIGHT);
-        							}
-        						}
-        						if(((String) p.get(i + ":" + j + ":" + Squares.BOTTOM)).equals(Squares.FALSE)) {
-        							if(i + 1 != size) {
-	        							if(this.lines(i + 1, j, p) <2)
-	        								moves.add(Squares.BOTTOM);
-        							}
-        						}
-        						if(moves.size() != 0) { 
-        							lastBox[1] = j + 1 % size;
-        							lastBox[0] = j + 1 == size? i + 1 : i;
-        							y = i;
-        							x = j;
-        							break out;
-        						}
-        					}	
-        				}
-	    				lastBox[1] = 0;
-        				
-        			}
+					int[] box = pahse0(p);
 					try {
-                		String move = moves.get((int) (Math.random() * moves.size()));
-                        return new Action(y + ":" + x + ":" + move);
+						String move = moves.get((int) (Math.random() * moves.size()));
+						moves.clear();
+                        return new Action(box[0] + ":" + box[1] + ":" + move);
         			} catch (Exception e) {}
         			break;
         		case 1:
-        			// revision
-        			actualizarTablero(p);
+        			// min-max
+					actualizarTablero(p);
+					phase = 2;
         			System.out.println("Llegue a la fase 1");
         			break; 	
-		        	
         		case 2:
-        			System.out.println(cuenta);
-        			// min-max
-        			actualizarTablero(p);
-        			ArrayList<String> datos = new ArrayList<String>();
-        			
-        			for (int i = 0;i < size;i++) {
-        				for (int j = 0;j < size;j++) {
-        					cuenta = 0;
-        					values = Arrays.stream(board).map(int[]::clone).toArray(int[][]::new);
-
-        					if (lines(i,j)==2)
-	        					if(!((values[i][j] & Board.RIGHT)==Board.RIGHT)) {
-	        						values[i][j] |= Board.RIGHT;
-	        						values[i][j+1] |= Board.LEFT;
-	        						check(i,j);
-	        						if (recheck) check(i,j+1);
-	        						recheck=true;
-	        						datos.add(i+":"+j+":"+Squares.RIGHT+":"+cuenta);
-	        						values = Arrays.stream(board).map(int[]::clone).toArray(int[][]::new);
-	        						cuenta = 0;
-	    						}
-	    						if(!((values[i][j] & Board.BOTTOM)==Board.BOTTOM)) {
-	    							values[i][j] |= Board.BOTTOM;
-	    							values[i+1][j] |= Board.TOP;
-	    							check(i,j);
-	    							if (recheck) check(i+1,j);
-	    							recheck=true;
-	    							datos.add(i+":"+j+":"+Squares.BOTTOM+":"+cuenta);
-	    							values = Arrays.stream(board).map(int[]::clone).toArray(int[][]::new);
-	    							cuenta = 0;
-	    						}
-	    						if(!((values[i][j] & Board.LEFT)==Board.LEFT)) {
-	    							values[i][j] |= Board.LEFT;
-	    							values[i][j-1] |= Board.RIGHT;
-	    							check(i,j);
-	    							if (recheck) check(i,j-1);
-	    							recheck=true;
-	    							datos.add(i+":"+j+":"+Squares.LEFT+":"+cuenta);
-	    							
-	    							values = Arrays.stream(board).map(int[]::clone).toArray(int[][]::new);
-	    							cuenta = 0;
-	    						}
-	    						if(!((values[i][j] & Board.TOP)==Board.TOP)){
-	    							values[i][j] |= Board.TOP;
-	    							values[i-1][j] |= Board.BOTTOM;
-	    							check(i,j);
-	    							if (recheck) check(i-1,j);
-	    							recheck=true;
-	    							datos.add(i+":"+j+":"+Squares.TOP+":"+cuenta);
-	    							values = Arrays.stream(board).map(int[]::clone).toArray(int[][]::new);
-	    							cuenta = 0;
-	    						}
-        				}
-        			}        			        			
-        			
-        			try{
-        				String min = "";
-            			int minMov = Integer.MAX_VALUE;
-            			for (String s:datos) {
-            				String[] aux = s.split(":");
-            				if (Integer.parseInt(aux[3])<minMov) {
-            					minMov=Integer.parseInt(aux[3]);
-            					
-            					min = aux[0]+":"+aux[1]+":"+aux[2];
-            				}
-            			}
-        				return new Action(min);
-        			}catch (Exception e) {
-        				
-        			}
-        			datos.clear();
+        			actualizarTablero(p);        			
+        			Action move = phase2();
+					moves.clear();
+					try {
+						return move;
+					} catch (Exception e) {}
         			break;
         		default:
         			break;
@@ -205,26 +71,156 @@ public class Esteban implements AgentProgram {
         }
         return new Action(lastBox[0] + ":" + lastBox[1] + ":" + Squares.PASS);
 	}
-	
-	private int lines(int i, int j, Percept p){
-		int c = ((String) p.get(i + ":" + j + ":" + Squares.LEFT)).equals(Squares.TRUE)? 1 : 0;
-		c += ((String) p.get(i + ":" + j +":" + Squares.TOP)).equals(Squares.TRUE)? 1 : 0;
-		c += ((String) p.get(i + ":" + j +":" + Squares.RIGHT)).equals(Squares.TRUE)? 1 : 0;
-		c += ((String) p.get(i + ":" + j +":" + Squares.BOTTOM)).equals(Squares.TRUE)? 1 : 0;
-		return c;
-	}
 
 	@Override
 	public void init() {
 		// TODO Auto-generated method stub
 	}
-	
-	protected int lines(int i, int j){
-	      int c=(values[i][j] & Board.LEFT)==Board.LEFT?1:0;
-	      c+=(values[i][j] & Board.TOP)==Board.TOP?1:0;
-	      c+=(values[i][j] & Board.RIGHT)==Board.RIGHT?1:0;
-	      c+=(values[i][j] & Board.BOTTOM)==Board.BOTTOM?1:0;
-	      return c;
+
+	protected void resetValues(int i, int j, String line) {
+		recheck = true;
+		moves.add(i + ":" + j + ":" + line + ":" + cuenta);
+		values = Arrays.stream(board).map(int[]::clone).toArray(int[][]::new);
+		cuenta = 0;
+	}
+
+	protected void makeMove(int i, int j) {
+		if ((values[i][j] & Board.RIGHT) != Board.RIGHT) {
+			values[i][j] |= Board.RIGHT;
+			values[i][j + 1] |= Board.LEFT;
+			check(i, j);
+			if (recheck) check(i, j + 1);
+			resetValues(i, j, Squares.RIGHT);
+		}
+		if ((values[i][j] & Board.BOTTOM) != Board.BOTTOM) {
+			values[i][j] |= Board.BOTTOM;
+			values[i + 1][j] |= Board.TOP;
+			check(i, j);
+			if (recheck) check(i + 1, j);
+			resetValues(i, j, Squares.BOTTOM);
+		}
+		if ((values[i][j] & Board.LEFT) != Board.LEFT) {
+			values[i][j] |= Board.LEFT;
+			values[i][j - 1] |= Board.RIGHT;
+			check(i, j);
+			if (recheck) check(i, j - 1);
+			resetValues(i, j, Squares.LEFT);
+		}
+		if ((values[i][j] & Board.TOP) != Board.TOP) {
+			values[i][j] |= Board.TOP;
+			values[i - 1][j] |= Board.BOTTOM;
+			check(i, j);
+			if (recheck) check(i - 1, j);
+			resetValues(i, j, Squares.TOP);
+		}
+	}
+
+	protected Action phase2() {
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				cuenta = 0;
+				values = Arrays.stream(board).map(int[]::clone).toArray(int[][]::new);
+				if (lines(i, j) == 2)
+					makeMove(i, j);
+			}
+		}
+		String min = Squares.PASS;
+		int minMov = Integer.MAX_VALUE;
+		for (String s:moves) {
+			String[] aux = s.split(":");
+			if (Integer.parseInt(aux[3])<minMov) {
+				minMov=Integer.parseInt(aux[3]);
+				min = aux[0]+":"+aux[1]+":"+aux[2];
+			}
+		}
+		return new Action(min);
+	}
+
+	protected int[] pahse0(Percept p) {
+		int[] box = new int[2];
+		out: for (int i = lastBox[0]; i < size; i++) {
+			for (int j = lastBox[1]; j < size; j++) {
+				//turnos * 2 + 70 >= ((size * size * 4) - (4 * size) - ((size * size * 4) - (4 * size)) / 2)
+				if (i == size -1 ) {
+					phase = 1;
+					break out;
+				}
+				if (lines(i, j, p) < 2) {
+					if (avalible(i, j, Squares.RIGHT, true, p)) {
+						if (lines(i, j + 1, p) < 2)
+							moves.add(Squares.RIGHT);
+					}
+					if (avalible(i, j, Squares.BOTTOM, false, p)) {
+						if (lines(i + 1, j, p) < 2)
+							moves.add(Squares.BOTTOM);
+					}
+					if (moves.size() != 0) {
+						lastBox[1] = j + 1 % size;
+						lastBox[0] = j + 1 == size ? i + 1 : i;
+						box[0] = i;
+						box[1] = j;
+						break out;
+					}
+				}
+			}
+			lastBox[1] = 0;
+		}
+		return box;
+	}
+
+	protected boolean avalible(int y, int x, String line, boolean isRight, Percept p) {
+		if (isRight)
+			return ((String) p.get(y + ":" + x + ":" + line)).equals(Squares.FALSE) && x + 1 != size;
+		return ((String) p.get(y + ":" + x + ":" + line)).equals(Squares.FALSE) && y + 1 != size;
+	}
+
+	protected int lines(int i, int j, Percept p){
+		int c = ((String) p.get(i + ":" + j + ":" + Squares.LEFT)).equals(Squares.TRUE)? 1 : 0;
+			c += ((String) p.get(i + ":" + j +":" + Squares.TOP)).equals(Squares.TRUE)? 1 : 0;
+			c += ((String) p.get(i + ":" + j +":" + Squares.RIGHT)).equals(Squares.TRUE)? 1 : 0;
+			c += ((String) p.get(i + ":" + j +":" + Squares.BOTTOM)).equals(Squares.TRUE)? 1 : 0;
+		return c;
+	}
+
+	private void actualizarTablero(Percept p) {
+		for(int i = 0;i < size;i++) {
+			for(int j = 0;j < size;j++) {
+				if (((String) p.get(i + ":" + j + ":" + Squares.LEFT)).equals(Squares.TRUE))
+					board[i][j] |= Board.LEFT;
+				if (((String) p.get(i + ":" + j + ":" + Squares.TOP)).equals(Squares.TRUE))
+					board[i][j] |= Board.TOP;
+    			if(((String)p.get(i+":"+j+":"+Squares.BOTTOM)).equals(Squares.TRUE))
+    				board[i][j] |= Board.BOTTOM;
+    			if(((String)p.get(i+":"+j+":"+Squares.RIGHT)).equals(Squares.TRUE))
+    				board[i][j] |= Board.RIGHT;
+    		}
+    	}
+    }
+
+	protected void createBoard() {
+		board = new int[size][size];
+		for( int i = 0;i < size;i++ ){
+			board[i][0] = Board.LEFT;
+			board[i][size-1] = Board.RIGHT;
+		}
+		for (int i = 0; i < size; i++) {
+			board[0][i] |= Board.TOP;
+			board[size - 1][i] |= Board.BOTTOM;
+		}
+//            for(int i = 0;i < size;i++) {
+//            	for(int j = 0;j < size;j++) {
+//            		System.out.print(board[i][j] + " ");
+//            	}
+//            	System.out.println();
+//            }
+	}
+
+	protected int lines(int i, int j) {
+		int c=(values[i][j] & Board.LEFT)==Board.LEFT?1:0;
+			c+=(values[i][j] & Board.TOP)==Board.TOP?1:0;
+			c+=(values[i][j] & Board.RIGHT)==Board.RIGHT?1:0;
+			c+=(values[i][j] & Board.BOTTOM)==Board.BOTTOM?1:0;
+	    return c;
 	}
 	
 	protected boolean closable(int i, int j){
@@ -238,7 +234,7 @@ public class Esteban implements AgentProgram {
     protected void check(int i, int j){ 
     	if(closed(i,j)) {
     		cuenta++;
-    		recheck=false;
+    		recheck = false;
     	}else{
 	    	if(closable(i,j)){
 	        if( (values[i][j] & Board.LEFT)==0 ){
@@ -271,5 +267,4 @@ public class Esteban implements AgentProgram {
     	}
       }
 	}  
-    
 }
