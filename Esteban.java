@@ -70,7 +70,6 @@ public class Esteban implements AgentProgram {
         // Determines if it is the agents turn
         if( p.get(Squares.TURN).equals(color) ){
         	// Esteban turn
-//        	System.out.println("Esteban turn");
         	Array<String> moves = new Array<String>();
         	switch(phase) {
         		case 0:
@@ -107,7 +106,6 @@ public class Esteban implements AgentProgram {
                 		String move = moves.get((int) (Math.random() * moves.size()));
                         return new Action(y + ":" + x + ":" + move);
         			} catch (Exception e) {}
-        			
         			break;
         		case 1:
         			// revision
