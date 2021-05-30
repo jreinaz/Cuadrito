@@ -18,6 +18,8 @@ public class Esteban implements AgentProgram {
     protected int cuenta = 0;
 	protected boolean recheck = true;
 	protected Array<String> moves = new Array<>();
+	protected int[] lastPosition = new int[2];
+	protected boolean played = false;
 	
     public Esteban(String color) {
 		this.color = color;
@@ -32,39 +34,45 @@ public class Esteban implements AgentProgram {
 			Thread.sleep(time);
         }catch(Exception e) {}
         
-		if(size == 0) // Gets the size of the board
+		if(size == 0){ // Gets the size of the board
         	size = Integer.parseInt((String)p.get(Squares.SIZE));
+        	detenerse(size+7);
+        	//@ToDo probar size*1.5
+		}
         if(board == null) createBoard();
         
         // Determines if it is the agents turn
         if( p.get(Squares.TURN).equals(color) ){
 			// Esteban turn
-        	switch(phase) {
-        		case 0:
-					int[] box = pahse0(p);
-					try {
-						String move = moves.get((int) (Math.random() * moves.size()));
+        	played=false;
+        	while(!played) {
+	        	switch(phase) {
+	        		case 0:
+						int[] box = pahse0(p);
+						try {
+							String move = moves.get((int) (Math.random() * moves.size()));
+							moves.clear();
+	                        if (phase!=1) return new Action(box[0] + ":" + box[1] + ":" + move);
+	        			} catch (Exception e) {}
+	        			break;
+	        		case 1:
+	        			// min-max
+						actualizarTablero(p);
+						//phase = 2;
+	        			break; 	
+	        		case 2:
+	        			actualizarTablero(p);        			
+	        			Action move = phase2();
 						moves.clear();
-                        return new Action(box[0] + ":" + box[1] + ":" + move);
-        			} catch (Exception e) {}
-        			break;
-        		case 1:
-        			// min-max
-					actualizarTablero(p);
-					phase = 2;
-        			System.out.println("Llegue a la fase 1");
-        			break; 	
-        		case 2:
-        			actualizarTablero(p);        			
-        			Action move = phase2();
-					moves.clear();
-					try {
-						return move;
-					} catch (Exception e) {}
-        			break;
-        		default:
-        			break;
+						try {
+							return move;
+						} catch (Exception e) {}
+	        			break;
+	        		default:
+	        			break;
+	        	}
         	}
+        	System.out.println("XD");
         	return new Action(lastBox[0] + ":" + lastBox[1] + ":" + Squares.PASS);
         } else {
         	// Opponents turn
@@ -133,6 +141,8 @@ public class Esteban implements AgentProgram {
 				min = aux[0]+":"+aux[1]+":"+aux[2];
 			}
 		}
+		if (!min.equals(Squares.PASS))
+			played = true;
 		return new Action(min);
 	}
 
@@ -141,7 +151,7 @@ public class Esteban implements AgentProgram {
 		out: for (int i = lastBox[0]; i < size; i++) {
 			for (int j = lastBox[1]; j < size; j++) {
 				//turnos * 2 + 70 >= ((size * size * 4) - (4 * size) - ((size * size * 4) - (4 * size)) / 2)
-				if (i == size -1 ) {
+				if (i == lastPosition[0] && j == lastPosition[1]) {
 					phase = 1;
 					break out;
 				}
@@ -155,6 +165,7 @@ public class Esteban implements AgentProgram {
 							moves.add(Squares.BOTTOM);
 					}
 					if (moves.size() != 0) {
+						played = true;
 						lastBox[1] = j + 1 % size;
 						lastBox[0] = j + 1 == size ? i + 1 : i;
 						box[0] = i;
@@ -266,5 +277,20 @@ public class Esteban implements AgentProgram {
 	        }
     	}
       }
-	}  
+	}
+    
+    protected void detenerse (int a) {
+    	stop:
+    	for (int i = size-1; i >= 0;i--) {
+    		for (int j = size-1; j>=0; j--) {
+    			cuenta++;
+    			
+    			if (cuenta==a) {
+    				lastPosition[0]=i;
+    				lastPosition[1]=j;
+    				break stop;
+    			}
+    		}
+    	}
+    }
 }
