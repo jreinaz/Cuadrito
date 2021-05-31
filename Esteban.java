@@ -29,14 +29,11 @@ public class Esteban implements AgentProgram {
     
 	@Override
 	public Action compute(Percept p) {
-		long time = (long)(200 * Math.random());
-		try {
-			Thread.sleep(time);
-        }catch(Exception e) {}
-        
+		
 		if(size == 0){ // Gets the size of the board
         	size = Integer.parseInt((String)p.get(Squares.SIZE));
-        	detenerse(size+7);
+        	int x = size > 13? (int) (size * 1.2) : 15;
+        	detenerse(x);
         	//@ToDo probar size*1.5
 		}
         if(board == null) createBoard();
@@ -44,7 +41,7 @@ public class Esteban implements AgentProgram {
         // Determines if it is the agents turn
         if( p.get(Squares.TURN).equals(color) ){
 			// Esteban turn
-        	played=false;
+        	played = false;
         	while(!played) {
 	        	switch(phase) {
 	        		case 0:
@@ -52,12 +49,13 @@ public class Esteban implements AgentProgram {
 						try {
 							String move = moves.get((int) (Math.random() * moves.size()));
 							moves.clear();
-	                        if (phase!=1) return new Action(box[0] + ":" + box[1] + ":" + move);
+	                        if (phase != 1 && played) return new Action(box[0] + ":" + box[1] + ":" + move);
 	        			} catch (Exception e) {}
 	        			break;
 	        		case 1:
 	        			// min-max
 						actualizarTablero(p);
+						//
 						//phase = 2;
 	        			break; 	
 	        		case 2:
@@ -151,7 +149,7 @@ public class Esteban implements AgentProgram {
 		out: for (int i = lastBox[0]; i < size; i++) {
 			for (int j = lastBox[1]; j < size; j++) {
 				//turnos * 2 + 70 >= ((size * size * 4) - (4 * size) - ((size * size * 4) - (4 * size)) / 2)
-				if (i == lastPosition[0] && j == lastPosition[1]) {
+				if (i >= lastPosition[0] && j >= lastPosition[1]) {
 					phase = 1;
 					break out;
 				}
@@ -166,7 +164,7 @@ public class Esteban implements AgentProgram {
 					}
 					if (moves.size() != 0) {
 						played = true;
-						lastBox[1] = j + 1 % size;
+						lastBox[1] = (j + 1) % size;
 						lastBox[0] = j + 1 == size ? i + 1 : i;
 						box[0] = i;
 						box[1] = j;
