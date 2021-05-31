@@ -42,6 +42,7 @@ public class Esteban implements AgentProgram {
         if( p.get(Squares.TURN).equals(color) ){
 			// Esteban turn
         	played = false;
+        	int[] puntos = null;
         	while(!played) {
 	        	switch(phase) {
 	        		case 0:
@@ -53,10 +54,10 @@ public class Esteban implements AgentProgram {
 	        			} catch (Exception e) {}
 	        			break;
 	        		case 1:
-	        			// min-max
-						actualizarTablero(p);
+	        			// min-max	        			
+						//puntos=actualizarTablero(p);
 						//
-						//phase = 2;
+						phase = 2;
 	        			break; 	
 	        		case 2:
 	        			actualizarTablero(p);        			
@@ -149,10 +150,15 @@ public class Esteban implements AgentProgram {
 		out: for (int i = lastBox[0]; i < size; i++) {
 			for (int j = lastBox[1]; j < size; j++) {
 				//turnos * 2 + 70 >= ((size * size * 4) - (4 * size) - ((size * size * 4) - (4 * size)) / 2)
-				if (i >= lastPosition[0] && j >= lastPosition[1]) {
+				/*if (i >= lastPosition[0] && j >= lastPosition[1]) {
+					phase = 1;
+					break out;
+				}*/
+				if (i == size-1 && j == size-1) {
 					phase = 1;
 					break out;
 				}
+				
 				if (lines(i, j, p) < 2) {
 					if (avalible(i, j, Squares.RIGHT, true, p)) {
 						if (lines(i, j + 1, p) < 2)
@@ -191,7 +197,9 @@ public class Esteban implements AgentProgram {
 		return c;
 	}
 
-	private void actualizarTablero(Percept p) {
+	private int[]  actualizarTablero(Percept p) {
+		int[] puntos = new int [2];
+    	String s;
 		for(int i = 0;i < size;i++) {
 			for(int j = 0;j < size;j++) {
 				if (((String) p.get(i + ":" + j + ":" + Squares.LEFT)).equals(Squares.TRUE))
@@ -202,8 +210,17 @@ public class Esteban implements AgentProgram {
     				board[i][j] |= Board.BOTTOM;
     			if(((String)p.get(i+":"+j+":"+Squares.RIGHT)).equals(Squares.TRUE))
     				board[i][j] |= Board.RIGHT;
+    			s = (String) p.get(i + ":" + j);
+    			if (s.equals(color)) {
+    				board[i][j] |= Board.WHITE;
+    				puntos[0]++;
+    			}else if (!s.equals(Squares.SPACE)) {
+    				board[i][j] |= Board.BLACK;
+    				puntos[1]++;
+    			}
     		}
     	}
+		return puntos;
     }
 
 	protected void createBoard() {
@@ -291,4 +308,5 @@ public class Esteban implements AgentProgram {
     		}
     	}
     }
+    
 }
