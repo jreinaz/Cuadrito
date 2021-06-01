@@ -22,6 +22,7 @@ public class Esteban implements AgentProgram {
 	protected boolean played = false;
 	protected ArrayList<String> historial = new ArrayList<>();
 	protected int maximunMoves = 0;
+	protected boolean canMinMax = true;
 
 	public Esteban(String color) {
 		this.color = color;
@@ -34,9 +35,10 @@ public class Esteban implements AgentProgram {
 
 		if (size == 0) { // Gets the size of the board
 			size = Integer.parseInt((String) p.get(Squares.SIZE));
-			maximunMoves = size > 13 ? (int) (size * 1.2) : 15;
+			maximunMoves = size > 11 ? (int) (size * 1.2) : 15;
 			phase = size > 4 ? 0 : 1;
 			detenerse(maximunMoves);
+			//maximunMoves++;
 			// @ToDo probar size*1.5
 		}
 		if (board == null)
@@ -65,15 +67,19 @@ public class Esteban implements AgentProgram {
 					//
 					values = Arrays.stream(board).map(int[]::clone).toArray(int[][]::new);
 					System.out.println("Uso minMax --->" + color);
-					String jugada = minMax("0:0:" + Squares.PASS, true, 4, puntos);
-					String[] s = jugada.split(":");
-					jugada = s[0] + ":" + s[1] + ":" + s[2];
-					try {
-						return new Action(jugada);
-					} catch (Exception e) {
-						// TODO: handle exception
+					String jugada = null;
+					if (canMinMax) {
+						jugada = minMax("0:0:" + Squares.PASS, true, 5, puntos);
+						String[] s = jugada.split(":");
+						jugada = s[0] + ":" + s[1] + ":" + s[2];
+						try {
+							return new Action(jugada);
+						} catch (Exception e) {
+							// TODO: handle exception
+						}
+					}else {
+						phase=2;
 					}
-
 					// phase = 2;
 					break;
 				case 2:
@@ -378,11 +384,12 @@ public class Esteban implements AgentProgram {
 
 		sacarJugadas(maximunMoves--);
 		ArrayList<String> aux = new ArrayList<String>(moves);
-		System.out.println("Moves length ---> " + moves.size());
+		if (moves.size()==0) canMinMax = false;
 		moves.clear();
 		if (isMax) {
 			String resultado = null;
 			int maxEva = Integer.MIN_VALUE;
+			if(aux.isEmpty()) return "0:0:PASS:"+maxEva;
 			for (String jugada : aux) {
 				historial.add(jugada);
 				resultado = minMax(jugada, false, profundidad - 1, punt);
@@ -395,6 +402,7 @@ public class Esteban implements AgentProgram {
 		} else {
 			String resultado = null;
 			int minEva = Integer.MAX_VALUE;
+			if(aux.isEmpty()) return "0:0:PASS:"+minEva;
 			for (String jugada : aux) {
 				historial.add(jugada);
 				resultado = minMax(jugada, true, profundidad - 1, punt);

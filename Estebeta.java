@@ -7,7 +7,7 @@ import uniltiranyu.Action;
 import uniltiranyu.AgentProgram;
 import uniltiranyu.Percept;
 
-public class Esteban implements AgentProgram {
+public class Estebeta implements AgentProgram {
 
 	protected String color;
 	protected int[][] board = null;
@@ -21,7 +21,7 @@ public class Esteban implements AgentProgram {
 	protected int[] lastPosition = new int[2];
 	protected boolean played = false;
 
-	public Esteban(String color) {
+	public Estebeta(String color) {
 		this.color = color;
 		this.lastBox[0] = 0;
 		this.lastBox[1] = 1;
@@ -33,7 +33,7 @@ public class Esteban implements AgentProgram {
 		if (size == 0) { // Gets the size of the board
 			size = Integer.parseInt((String) p.get(Squares.SIZE));
 			int x = size > 13 ? (int) (size * 1.2) : 15;
-			phase = size > 4 ? 0:1;
+			//phase = size > 4 ? 0:1;
 			detenerse(x);
 			// @ToDo probar size*1.5
 		}
@@ -61,7 +61,7 @@ public class Esteban implements AgentProgram {
 					// min-max
 					// puntos=actualizarTablero(p);
 					//
-					System.out.println("yei");
+					//System.out.println("yei");
 					//phase = 2;
 					break;
 				case 2:
@@ -162,12 +162,12 @@ public class Esteban implements AgentProgram {
 				// turnos * 2 + 70 >= ((size * size * 4) - (4 * size) - ((size * size * 4) - (4
 				// * size)) / 2)
 				
-				if (i >= lastPosition[0] && j >= lastPosition[1]) { phase = 1; break out; }
+//				if (i >= lastPosition[0] && j >= lastPosition[1]) { phase = 1; break out; }
 				 
-//				if (i == size - 1 && j == size - 1) {
-//					phase = 1;
-//					break out;
-//				}
+				if (i == size - 1 && j == size - 1) {
+					phase = 2;
+					break out;
+				}
 
 				if (lines(i, j, p) < 2) {
 					if (avalible(i, j, Squares.RIGHT, true, p)) {
