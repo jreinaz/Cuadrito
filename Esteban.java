@@ -35,10 +35,10 @@ public class Esteban implements AgentProgram {
 
 		if (size == 0) { // Gets the size of the board
 			size = Integer.parseInt((String) p.get(Squares.SIZE));
-			maximunMoves = size > 10 ? (int) (size * 1.5) : 15;
+			maximunMoves = size > 7 ? (int) (size * 2.2) : 15;
 			phase = size > 4 ? 0 : 1;
 			detenerse(maximunMoves);
-			maximunMoves+=500;
+			//maximunMoves+=500;
 			// @ToDo probar size*1.5
 		}
 		if (board == null)
@@ -369,6 +369,31 @@ public class Esteban implements AgentProgram {
 //			System.out.printf("Jugadas: %d -> %s\n", i, moves.get(moves.size() - 1));
 		}
 	}
+	
+	protected void sacarJugadas() {
+		for (int i = lastPosition[0]; i < size; i++) {
+			for (int j=0; j < size; j++) {
+//				System.out.printf("Jugadas: %d -> y: %d x %d\n", i, y, x);
+				if ((values[i][j] & Board.LEFT) == 0) {
+					moves.add(i + ":" + j + ":" + Squares.LEFT);
+					break;
+				}
+				if ((values[i][j] & Board.TOP) == 0) {
+					moves.add(i + ":" + j + ":" + Squares.TOP);
+					break;
+				}
+				if ((values[i][j] & Board.BOTTOM) == 0) {
+					moves.add(i + ":" + j + ":" + Squares.BOTTOM);
+					break;
+				}
+				if ((values[i][j] & Board.RIGHT) == 0) {
+					moves.add(i + ":" + j + ":" + Squares.RIGHT);
+					break;
+				}
+			}	
+//			System.out.printf("Jugadas: %d -> %s\n", i, moves.get(moves.size() - 1));
+		}
+	}
 
 	protected String minMax(String nodo, boolean isMax, int profundidad, int[] puntos, int alpha, int beta) {
 //		System.out.println("profundidad: " + profundidad);
@@ -381,7 +406,7 @@ public class Esteban implements AgentProgram {
 		// Hacer jugada y sacar los hijos
 		int[] punt = jugarMinMax(nodo, puntos, isMax);
 
-		sacarJugadas(maximunMoves--);
+		sacarJugadas(/*maximunMoves--*/);
 		ArrayList<String> aux = new ArrayList<String>(moves);
 		if (moves.size()==0) canMinMax = false;
 		moves.clear();
