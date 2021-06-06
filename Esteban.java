@@ -62,13 +62,15 @@ public class Esteban implements AgentProgram {
 					}
 					break;
 				case 1:
+					System.out.println("entre en fase 1");
 					// min-max
 					puntos = actualizarTablero(p);
 					//
 					values = Arrays.stream(board).map(int[]::clone).toArray(int[][]::new);
 					String jugada = null;
 					if (canMinMax) {
-						jugada = minMax("0:0:" + Squares.PASS, true, 1200, puntos,Integer.MIN_VALUE,Integer.MAX_VALUE);
+						System.out.println("si entre");
+						jugada = minMax("0:0:" + Squares.PASS, true, 4, puntos,Integer.MIN_VALUE,Integer.MAX_VALUE);
 						String[] s = jugada.split(":");
 						jugada = s[0] + ":" + s[1] + ":" + s[2];
 						try {
@@ -77,11 +79,12 @@ public class Esteban implements AgentProgram {
 							// TODO: handle exception
 						}
 					}else {
-						phase=2;
+						//phase=2;
 					}
 					// phase = 2;
 					break;
 				case 2:
+					System.out.println("entre en fase 2");
 					actualizarTablero(p);
 					Action move = phase2();
 					moves.clear();
@@ -371,24 +374,20 @@ public class Esteban implements AgentProgram {
 	}
 	
 	protected void sacarJugadas() {
-		for (int i = lastPosition[0]; i < size; i++) {
+		for (int i = 0/*lastPosition[0]*/; i < size; i++) {
 			for (int j=0; j < size; j++) {
 //				System.out.printf("Jugadas: %d -> y: %d x %d\n", i, y, x);
 				if ((values[i][j] & Board.LEFT) == 0) {
 					moves.add(i + ":" + j + ":" + Squares.LEFT);
-					break;
 				}
 				if ((values[i][j] & Board.TOP) == 0) {
 					moves.add(i + ":" + j + ":" + Squares.TOP);
-					break;
 				}
 				if ((values[i][j] & Board.BOTTOM) == 0) {
 					moves.add(i + ":" + j + ":" + Squares.BOTTOM);
-					break;
 				}
 				if ((values[i][j] & Board.RIGHT) == 0) {
 					moves.add(i + ":" + j + ":" + Squares.RIGHT);
-					break;
 				}
 			}	
 //			System.out.printf("Jugadas: %d -> %s\n", i, moves.get(moves.size() - 1));
@@ -408,7 +407,7 @@ public class Esteban implements AgentProgram {
 
 		sacarJugadas(/*maximunMoves--*/);
 		ArrayList<String> aux = new ArrayList<String>(moves);
-		if (moves.size()==0) canMinMax = false;
+		//if (moves.size()==0) canMinMax = false;
 		moves.clear();
 		if (isMax) {
 			String resultado = null;
