@@ -35,7 +35,8 @@ public class Esteban implements AgentProgram {
 
 		if (size == 0) { // Gets the size of the board
 			size = Integer.parseInt((String) p.get(Squares.SIZE));
-			maximunMoves = size > 7 ? (int) (size * 2.2) : 15;
+//			maximunMoves = size > 12 ? (int) (size * 1.2) : 15;
+			maximunMoves = (int) (size * 1.5);
 			phase = size > 4 ? 0 : 1;
 			detenerse(maximunMoves);
 			//maximunMoves+=500;
@@ -62,29 +63,22 @@ public class Esteban implements AgentProgram {
 					}
 					break;
 				case 1:
-					System.out.println("entre en fase 1");
-					// min-max
+//					System.out.println("Esteban entre en fase 1");
 					puntos = actualizarTablero(p);
-					//
 					values = Arrays.stream(board).map(int[]::clone).toArray(int[][]::new);
 					String jugada = null;
 					if (canMinMax) {
-						System.out.println("si entre");
-						jugada = minMax("0:0:" + Squares.PASS, true, 4, puntos,Integer.MIN_VALUE,Integer.MAX_VALUE);
+						jugada = minMax("0:0:" + Squares.PASS, true, 7, puntos, Integer.MIN_VALUE, Integer.MAX_VALUE);
 						String[] s = jugada.split(":");
+						if(s[2].equals(Squares.PASS)) phase = 2;
 						jugada = s[0] + ":" + s[1] + ":" + s[2];
 						try {
+//							System.out.println(jugada);
 							return new Action(jugada);
-						} catch (Exception e) {
-							// TODO: handle exception
-						}
-					}else {
-						//phase=2;
+						} catch (Exception e) {}
 					}
-					// phase = 2;
 					break;
 				case 2:
-					System.out.println("entre en fase 2");
 					actualizarTablero(p);
 					Action move = phase2();
 					moves.clear();
@@ -266,12 +260,6 @@ public class Esteban implements AgentProgram {
 			board[0][i] |= Board.TOP;
 			board[size - 1][i] |= Board.BOTTOM;
 		}
-		// for(int i = 0;i < size;i++) {
-		// for(int j = 0;j < size;j++) {
-		// System.out.print(board[i][j] + " ");
-		// }
-		// System.out.println();
-		// }
 	}
 
 	protected int lines(int i, int j) {
@@ -374,9 +362,8 @@ public class Esteban implements AgentProgram {
 	}
 	
 	protected void sacarJugadas() {
-		for (int i = 0/*lastPosition[0]*/; i < size; i++) {
-			for (int j=0; j < size; j++) {
-//				System.out.printf("Jugadas: %d -> y: %d x %d\n", i, y, x);
+		for (int i = lastPosition[0]; i < size; i++) {
+			for (int j = 0; j < size; j++) {
 				if ((values[i][j] & Board.LEFT) == 0) {
 					moves.add(i + ":" + j + ":" + Squares.LEFT);
 				}
@@ -389,60 +376,54 @@ public class Esteban implements AgentProgram {
 				if ((values[i][j] & Board.RIGHT) == 0) {
 					moves.add(i + ":" + j + ":" + Squares.RIGHT);
 				}
-			}	
-//			System.out.printf("Jugadas: %d -> %s\n", i, moves.get(moves.size() - 1));
+			}
 		}
 	}
 
 	protected String minMax(String nodo, boolean isMax, int profundidad, int[] puntos, int alpha, int beta) {
-//		System.out.println("profundidad: " + profundidad);
-		if (profundidad == 0) {
-//			System.out.println(nodo + ":" + (puntos[0]-puntos[1]));
-			// System.out.println("p0 "+puntos[0]+ " p1 " +puntos[1]);
-			return nodo + ":" + (puntos[0] - puntos[1]);
+		int[] punt = jugarMinMax(nodo, puntos, !isMax);
+		sacarJugadas();
+//		System.out.println("Profundidad: " + profundidad);
+//		System.out.println("Cantidad jugadas: " + moves.size());
+		if (profundidad == 0 || moves.size() == 0) {
+			moves.clear();
+			return nodo + ":" + (punt[0] - punt[1]);
 		}
-//		System.out.printf("Jugas a sacar: %d\n", julio);
-		// Hacer jugada y sacar los hijos
-		int[] punt = jugarMinMax(nodo, puntos, isMax);
-
-		sacarJugadas(/*maximunMoves--*/);
+		// Hacer jugada y sacar los hijos		
 		ArrayList<String> aux = new ArrayList<String>(moves);
-		//if (moves.size()==0) canMinMax = false;
 		moves.clear();
 		if (isMax) {
-			String resultado = null;
-			int maxEva = Integer.MIN_VALUE;
-			if(aux.isEmpty()) return "0:0:PASS:"+maxEva;
+			String bestPlay = "0:0:pass";
 			for (String jugada : aux) {
 				historial.add(jugada);
-				resultado = minMax(jugada, false, profundidad - 1, punt,alpha,beta);
-//				System.out.println(Arrays.toString(resultado.split(":")));
+				String resultado = minMax(jugada, false, profundidad - 1, punt, alpha, beta);
+				if(Integer.parseInt(resultado.split(":")[3]) >= alpha) {
+					bestPlay = jugada;
+					alpha = Integer.parseInt(resultado.split(":")[3]);
+				}
 				historial.remove(historial.size() - 1);
 				arreglarMatriz();
-				alpha = Math.max(alpha, Integer.parseInt(resultado.split(":")[3]));
-				maxEva = Math.max(maxEva, Integer.parseInt(resultado.split(":")[3]));
 				if (beta <= alpha) break;
 			}
-//			System.out.println("Resultado --> " + Arrays.toString(resultado.split(":")));
-			maximunMoves++;
-			return resultado;
+//			System.out.println("Profundidad --> " + profundidad);
+//			System.out.printf("Resultado max --> %s\t Alpha --> %d\n", bestPlay, alpha);
+//			System.out.printf("Alpha: %d\tBeta: %d\n", alpha, beta);
+			return bestPlay + ":" + alpha;
 		} else {
-			String resultado = null;
-			int minEva = Integer.MAX_VALUE;
-			if(aux.isEmpty()) return "0:0:PASS:"+minEva;
+			String bestPlay = null;
 			for (String jugada : aux) {
+				bestPlay = jugada;
 				historial.add(jugada);
-				resultado = minMax(jugada, true, profundidad - 1, punt,alpha, beta);
-//				System.out.println(Arrays.toString(resultado.split(":")));
+				String resultado = minMax(jugada, true, profundidad - 1, punt, alpha, beta);
+				beta = Math.min(beta, Integer.parseInt(resultado.split(":")[3]));
 				historial.remove(historial.size() - 1);
 				arreglarMatriz();
-				beta = Math.min(alpha, Integer.parseInt(resultado.split(":")[3]));
-				minEva = Math.min(minEva, Integer.parseInt(resultado.split(":")[3]));
 				if (beta <= alpha) break;
 			}
-//			System.out.println("Resultado --> " + Arrays.toString(resultado.split(":")));
-			maximunMoves++;
-			return resultado;
+//			System.out.println("Profundidad --> " + profundidad);
+//			System.out.printf("Resultado min --> %s\t Beta --> %d\n", bestPlay, beta);
+//			System.out.printf("Alpha: %d\tBeta: %d\n", alpha, beta);
+			return bestPlay + ":" + beta;
 		}
 	}
 
