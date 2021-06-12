@@ -43,8 +43,8 @@ public class Estebeta implements AgentProgram {
 		// Determines if it is the agents turn
 		if (p.get(Squares.TURN).equals(color)) {
 			// Esteban turn
+//			System.out.println("Estebeta turno");
 			played = false;
-			int[] puntos = null;
 			while (!played) {
 				switch (phase) {
 				case 0:
