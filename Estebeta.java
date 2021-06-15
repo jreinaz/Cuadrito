@@ -1,15 +1,13 @@
 package uniltiranyu.examples.games.squares;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
+import speco.array.Array;
 import uniltiranyu.Action;
 import uniltiranyu.AgentProgram;
 import uniltiranyu.Percept;
 
 public class Estebeta implements AgentProgram {
-
-	boolean xd = true;
 
 	protected String color;
 	protected int[][] board = null;
@@ -19,8 +17,7 @@ public class Estebeta implements AgentProgram {
 	protected int phase = 0;
 	protected int cuenta = 0;
 	protected boolean recheck = true;
-	protected ArrayList<String> moves = new ArrayList<>();
-
+	protected Array<String> moves = new Array<>();
 	protected int[] lastPosition = new int[2];
 	protected boolean played = false;
 
@@ -35,8 +32,8 @@ public class Estebeta implements AgentProgram {
 
 		if (size == 0) { // Gets the size of the board
 			size = Integer.parseInt((String) p.get(Squares.SIZE));
-			int x = (int) (size * 2);
-			// phase = size > 4 ? 0:1;
+			int x = size > 13 ? (int) (size * 1.2) : 15;
+			//phase = size > 4 ? 0:1;
 			detenerse(x);
 			// @ToDo probar size*1.5
 		}
@@ -51,25 +48,21 @@ public class Estebeta implements AgentProgram {
 			while (!played) {
 				switch (phase) {
 				case 0:
+					int[] box = pahse0(p);
 					try {
-						String jugada = phase0(p);
-						// System.out.println(jugada);
+						String move = moves.get((int) (Math.random() * moves.size()));
+						moves.clear();
 						if (phase != 1 && played)
-							return new Action(jugada);
+							return new Action(box[0] + ":" + box[1] + ":" + move);
 					} catch (Exception e) {
 					}
 					break;
 				case 1:
 					// min-max
 					// puntos=actualizarTablero(p);
-					if (xd) {
-						System.out.println("MOVES: ");
-						for (String s : moves)
-							System.out.print(s + " ");
-						System.out.println();
-					}
-					xd = false;
-					// phase = 2;
+					//
+					//System.out.println("yei");
+					//phase = 2;
 					break;
 				case 2:
 					actualizarTablero(p);
@@ -84,6 +77,7 @@ public class Estebeta implements AgentProgram {
 					break;
 				}
 			}
+			System.out.println("XD");
 			return new Action(lastBox[0] + ":" + lastBox[1] + ":" + Squares.PASS);
 		} else {
 			// Opponents turn
@@ -161,93 +155,48 @@ public class Estebeta implements AgentProgram {
 		return new Action(min);
 	}
 
-	protected String phase0(Percept p) {
-		ArrayList<String> jugadas = new ArrayList<>();
+	protected int[] pahse0(Percept p) {
+		int[] box = new int[2];
 		out: for (int i = lastBox[0]; i < size; i++) {
 			for (int j = lastBox[1]; j < size; j++) {
-
-				if (i >= lastPosition[0] && j >= lastPosition[1]) {
-					if (jugadasDisponibles(i, j, p) <= 5) {
-						phase = 1;
-						break out;
-					}
-
+				// turnos * 2 + 70 >= ((size * size * 4) - (4 * size) - ((size * size * 4) - (4
+				// * size)) / 2)
+				
+//				if (i >= lastPosition[0] && j >= lastPosition[1]) { phase = 1; break out; }
+				 
+				if (i == size - 1 && j == size - 1) {
+					phase = 2;
+					break out;
 				}
 
 				if (lines(i, j, p) < 2) {
 					if (avalible(i, j, Squares.RIGHT, true, p)) {
 						if (lines(i, j + 1, p) < 2)
-							jugadas.add(i + ":" + j + ":" + Squares.RIGHT);
+							moves.add(Squares.RIGHT);
 					}
 					if (avalible(i, j, Squares.BOTTOM, false, p)) {
 						if (lines(i + 1, j, p) < 2)
-							jugadas.add(i + ":" + j + ":" + Squares.BOTTOM);
+							moves.add(Squares.BOTTOM);
 					}
-					if (jugadas.size() != 0) {
+					if (moves.size() != 0) {
 						played = true;
 						lastBox[1] = (j + 1) % size;
 						lastBox[0] = j + 1 == size ? i + 1 : i;
+						box[0] = i;
+						box[1] = j;
 						break out;
 					}
 				}
 			}
 			lastBox[1] = 0;
 		}
-
-		return jugadas.get((int) (Math.random() * jugadas.size()));
-	}
-
-	protected int jugadasDisponibles(int i, int j, Percept p) {
-		moves.clear();
-		ArrayList<String> espejo = new ArrayList<>();
-		for (int a = i; a < size; a++) {
-			for (int b = a == i ? j : 0; b < size; b++) {
-				// System.out.println("a: "+a+" b: "+b);
-				if (lines(a, b, p) < 2) {
-					if (avalible(a, b, 0, p)) { // Izquierda
-						if (lines(a, b - 1, p) < 2 && !espejo.contains(a + ":" + b + ":" + Squares.LEFT)) {
-							moves.add(a + ":" + b + ":" + Squares.LEFT);
-							espejo.add(a + ":" + (b - 1) + ":" + Squares.RIGHT);
-						}
-					}
-					if (avalible(a, b, 1, p)) { // Top
-						if (lines(a - 1, b, p) < 2 && !espejo.contains(a + ":" + b + ":" + Squares.TOP)) {
-							moves.add(a + ":" + b + ":" + Squares.TOP);
-							espejo.add((a - 1) + ":" + b + ":" + Squares.BOTTOM);
-						}
-					}
-					if (avalible(a, b, 2, p)) { // Derecha
-						if (lines(a, b + 1, p) < 2 && !espejo.contains(a + ":" + b + ":" + Squares.RIGHT)) {
-							moves.add(a + ":" + b + ":" + Squares.RIGHT);
-							espejo.add(a + ":" + (b + 1) + ":" + Squares.LEFT);
-						}
-					}
-					if (avalible(a, b, 3, p)) { // Bottom
-						if (lines(a + 1, b, p) < 2 && !espejo.contains(a + ":" + b + ":" + Squares.BOTTOM)) {
-							moves.add(a + ":" + b + ":" + Squares.BOTTOM);
-							espejo.add((a + 1) + ":" + b + ":" + Squares.TOP);
-						}
-					}
-				}
-			}
-		}
-		return moves.size();
+		return box;
 	}
 
 	protected boolean avalible(int y, int x, String line, boolean isRight, Percept p) {
 		if (isRight)
 			return ((String) p.get(y + ":" + x + ":" + line)).equals(Squares.FALSE) && x + 1 != size;
 		return ((String) p.get(y + ":" + x + ":" + line)).equals(Squares.FALSE) && y + 1 != size;
-	}
-
-	protected boolean avalible(int y, int x, int dir, Percept p) {
-		if (dir == 0)
-			return ((String) p.get(y + ":" + x + ":" + Squares.LEFT)).equals(Squares.FALSE) && x - 1 != size;// izquierda
-		if (dir == 1)
-			return ((String) p.get(y + ":" + x + ":" + Squares.TOP)).equals(Squares.FALSE) && y - 1 != size;// arriba
-		if (dir == 2)
-			return ((String) p.get(y + ":" + x + ":" + Squares.RIGHT)).equals(Squares.FALSE) && x + 1 != size;// derecha
-		return ((String) p.get(y + ":" + x + ":" + Squares.BOTTOM)).equals(Squares.FALSE) && y + 1 != size;// abajo
 	}
 
 	protected int lines(int i, int j, Percept p) {
